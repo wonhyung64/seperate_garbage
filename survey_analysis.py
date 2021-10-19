@@ -1,7 +1,12 @@
 #%%
 import os
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import sklearn
 
+from sklearn.decomposition import FactorAnalysis
+from sklearn.decomposition import PCA
 
 # %%
 os.chdir("E:\Data\seperate_garbage")
@@ -104,3 +109,78 @@ print("[Q19] A5 : {}, A4 : {}, A3 : {}, A2 : {}, A1 : {}".format(
     round(q19_1 / (q19_5 + q19_4 + q19_3 + q19_2 + q19_1), 3))
 )
 #%% Work 3
+data.columns
+data['Sex']
+X_ = data.loc[:, ["Sex", "Age", "education", "Income", "Familysize", "Wherewaste"]]
+Y = data.loc[:, ["Wastemanagement", "Mixedwaste", "Segregation"]]
+
+factor_ = data.loc[:, ['importanceofpolicy', 'Individualcontribution',
+       'Ifanypolicy', 'Punishmentfornotpracticing', 'Economicencentive']]
+
+# Scree Plot
+pca = PCA(n_components = 5)
+pc = pca.fit_transform(factor_)
+
+num_components = len(pca.explained_variance_ratio_)
+ind = np.arange(num_components)
+vals = pca.explained_variance_ratio_
+ax = plt.subplot()
+cumvals = np.cumsum(vals)
+ax.bar(ind, vals, color = ['#00da75', '#f1c40f', '#ff6f15', '#3498db'])
+ax.plot(ind, cumvals, color = '#c0302b')
+
+for i in range(num_components):
+    ax.annotate(r"%s" %((str(vals[i] * 100)[:3])), (ind[i], vals[i]), va = "bottom", ha = "center", fontsize = 13)
+    
+ax.set_xlabel("PC")
+ax.set_ylabel("variance")
+plt.title("Scree plot")
+
+# FA
+fa = FactorAnalysis(rotation = 'varimax')
+fa.set_params(n_components = 3)
+fa.fit(factor_)
+
+variables = fa.fit_transform(factor_)
+col_tmp = ['factor1','factor2', 'factor3']
+factor = pd.DataFrame(variables, index=None, columns = col_tmp)
+
+# concat
+X = pd.concat([X_, factor], axis=1)
+
+#%% Work 5
+factor_ = data.loc[:, ['Importanceofsegregation', 'Segregationisthebiggestproblem',
+       'Dutyofmunicipality', 'Individualcannotminimizewaste',
+       'timeandresourceforsegregation', 'householdmanadate',
+       'Harmfultoenvironment', 'importanceofpolicy', 'Individualcontribution',
+       'Ifanypolicy', 'Punishmentfornotpracticing', 'Economicencentive']]
+
+# Scree plot
+pca = PCA(n_components = factor_.shape[1])
+pc = pca.fit_transform(factor_)
+
+num_components = len(pca.explained_variance_ratio_)
+ind = np.arange(num_components)
+vals = pca.explained_variance_ratio_
+ax = plt.subplot()
+cumvals = np.cumsum(vals)
+ax.bar(ind, vals, color = ['#00da75', '#f1c40f', '#ff6f15', '#3498db'])
+ax.plot(ind, cumvals, color = '#c0302b')
+
+for i in range(num_components):
+    ax.annotate(r"%s" %((str(vals[i] * 100)[:3])), (ind[i], vals[i]), va = "bottom", ha = "center", fontsize = 13)
+    
+ax.set_xlabel("PC")
+ax.set_ylabel("variance")
+plt.title("Scree plot")
+
+# FA
+fa = FactorAnalysis(rotation = 'varimax')
+fa.set_params(n_components = 5)
+fa.fit(factor_)
+
+variables = fa.fit_transform(factor_)
+col_tmp = ['factor1','factor2', 'factor3', 'factor4', 'factor5']
+factor = pd.DataFrame(variables, index=None, columns = col_tmp)
+
+# %%
