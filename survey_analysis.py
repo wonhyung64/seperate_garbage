@@ -112,7 +112,11 @@ print("[Q19] A5 : {}, A4 : {}, A3 : {}, A2 : {}, A1 : {}".format(
 data.columns
 data['Sex']
 X_ = data.loc[:, ["Sex", "Age", "education", "Income", "Familysize", "Wherewaste"]]
-Y = data.loc[:, ["Wastemanagement", "Mixedwaste", "Segregation"]]
+Y_ = data.loc[:, ["Wastemanagement", "Mixedwaste", "Segregation"]]
+Y = Y_.copy()
+Y["Wastemanagement"] = Y_["Wastemanagement"].map({1:1, 2:0})
+Y["Mixedwaste"] = Y_["Mixedwaste"].map({1:1, 2:0})
+Y["Segregation"] = Y_["Segregation"].map({1:1, 2:0})
 
 factor_ = data.loc[:, ['importanceofpolicy', 'Individualcontribution',
        'Ifanypolicy', 'Punishmentfornotpracticing', 'Economicencentive']]
@@ -147,8 +151,21 @@ factor = pd.DataFrame(variables, index=None, columns = col_tmp)
 
 # concat
 X = pd.concat([X_, factor], axis=1)
+#%%
+import statsmodels.api as sm
+from sklearn.datasets import make_blobs
+
+res1 = sm.Logit(Y.iloc[:, 0:1], sm.add_constant(X)).fit()
+res2 = sm.Logit(Y.iloc[:, 1:2], sm.add_constant(X)).fit()
+res3 = sm.Logit(Y.iloc[:, 2:3], sm.add_constant(X)).fit()
+
+print(res1.summary())
+print(res2.summary())
+print(res3.summary())
+
 
 #%% Work 5
+
 factor_ = data.loc[:, ['Importanceofsegregation', 'Segregationisthebiggestproblem',
        'Dutyofmunicipality', 'Individualcannotminimizewaste',
        'timeandresourceforsegregation', 'householdmanadate',
