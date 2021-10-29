@@ -150,7 +150,8 @@ col_tmp = ['factor1','factor2', 'factor3']
 factor = pd.DataFrame(variables, index=None, columns = col_tmp)
 
 # concat
-X = pd.concat([X_, factor], axis=1)
+X_ = pd.concat([X_, factor], axis=1)
+
 #%%
 import statsmodels.api as sm
 from sklearn.datasets import make_blobs
@@ -163,6 +164,66 @@ print(res1.summary())
 print(res2.summary())
 print(res3.summary())
 
+#%% forward selection
+
+variables = X_.columns ## 설명 변수 리스트
+
+selected_variables = [] ## 선택된 변수들
+sl_enter = 0.05
+
+sv_per_step = [] ## 각 스텝별로 선택된 변수들
+adjusted_r_squared = [] ## 각 스텝별 수정된 결정계수
+steps = [] ## 스텝
+step = 0
+while len(variables) > 0:
+    remainder = list(set(variables) - set(selected_variables))
+    pval = pd.Series(index=remainder) ## 변수의 p-value
+    ## 기존에 포함된 변수와 새로운 변수 하나씩 돌아가면서 
+    ## 선형 모형을 적합한다.
+    for col in remainder: 
+        X = X_[selected_variables+[col]]
+        X = sm.add_constant(X)
+        model = sm.Logit(Y.iloc[:, 0:1],X).fit()
+        pval[col] = model.pvalues[col]
+
+    min_pval = pval.min()
+    if min_pval < sl_enter: ## 최소 p-value 값이 기준 값보다 작으면 포함
+        selected_variables.append(pval.idxmin())
+        
+        step += 1
+        steps.append(step)
+        adj_r_squared = sm.Logit(Y.iloc[:, 0:1],sm.add_constant(X[selected_variables])).fit().rsquared_adj
+        adjusted_r_squared.append(adj_r_squared)
+        sv_per_step.append(selected_variables.copy())
+    else:
+        break
+
+#%% backward elimination
+
+variables = X_.columns
+
+selected_variables = variables ## 초기에는 모든 변수가 선택된 상태
+sl_remove = 0.05
+
+sv_per_step = [] ## 각 스텝별로 선택된 변수들
+adjusted_r_squared = [] ## 각 스텝별 수정된 결정계수
+steps = [] ## 스텝
+step = 0
+while len(selected_variables) > 0:
+    X = sm.add_constant(X_[selected_variables])
+    p_vals = sm.Logit(Y.iloc[:, 0:1], X).fit().pvalues[1:] ## 절편항의 p-value는 뺀다
+    max_pval = p_vals.max() ## 최대 p-value
+    if max_pval >= sl_remove: ## 최대 p-value값이 기준값보다 크거나 같으면 제외
+        remove_variable = p_vals.idxmax()
+        selected_variables.remove(remove_variable)
+
+        step += 1
+        steps.append(step)
+        adj_r_squared = sm.Logit(Y.iloc[:, 0:1],sm.add_constant(X[selected_variables])).fit().rsquared_adj
+        adjusted_r_squared.append(adj_r_squared)
+        sv_per_step.append(selected_variables.copy())
+    else:
+        break
 
 #%% Work 5
 
