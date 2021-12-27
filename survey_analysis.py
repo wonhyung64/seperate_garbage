@@ -9,9 +9,9 @@ from sklearn.decomposition import FactorAnalysis
 from sklearn.decomposition import PCA
 
 # %%
-os.chdir("C:\won\data\seperate_garbage")
-data = pd.read_csv("House hold solid waste segregation  data.csv")
-
+# os.chdir("C:\won\data\seperate_garbage")
+os.chdir("/Users/wonhyung64/data/")
+data = pd.read_csv("House hold solid waste segregation  data.xls", encoding='utf-8')
 data.columns
 # %% Work 1
 df_q7 = data["Mixedwaste"]
