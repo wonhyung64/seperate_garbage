@@ -10,9 +10,9 @@ from sklearn.decomposition import PCA
 
 # %%
 # os.chdir("C:\won\data\seperate_garbage")
-os.chdir("/Users/wonhyung64/data/")
-data = pd.read_csv("House hold solid waste segregation  data.xls", encoding='utf-8')
-data.columns
+os.chdir("/Users/wonhyung64/data/seperate")
+"/Users/wonhyung64/data/House hold solid waste segregation  data.xls"
+data = pd.read_csv("seperate.csv", encoding='utf-8')
 # %% Work 1
 df_q7 = data["Mixedwaste"]
 q7_yes = len(df_q7[(df_q7 == 1)==1])
@@ -210,10 +210,150 @@ res1 = sm.Logit(Y.iloc[:, 0:1], sm.add_constant(X)).fit()
 res2 = sm.Logit(Y.iloc[:, 1:2], sm.add_constant(X)).fit()
 res3 = sm.Logit(Y.iloc[:, 2:3], sm.add_constant(X)).fit()
 
-print(res1.summary())
-print(res2.summary())
-print(res3.summary())
+work3_y1_all = res1.summary()
 
+work3_y2_all = res2.summary()
+
+work3_y3_all = res3.summary()
+
+#%%work3
+
+#%% forward selection
+
+variables = X_.columns ## 설명 변수 리스트
+
+selected_variables = [] ## 선택된 변수들
+sl_enter = 0.1
+
+sv_per_step = [] ## 각 스텝별로 선택된 변수들
+bic_lst = [] ## 각 스텝별 수정된 결정계수
+steps = [] ## 스텝
+step = 0
+iter = len(variables)
+while iter > 0:
+    remainder = list(set(variables) - set(selected_variables))
+    pval = pd.Series(index=remainder) ## 변수의 p-value
+    ## 기존에 포함된 변수와 새로운 변수 하나씩 돌아가면서 
+    ## 선형 모형을 적합한다.
+    for col in remainder: 
+        X = X_[selected_variables+[col]]
+        X = sm.add_constant(X)
+        model = sm.Logit(Y.iloc[:, 0:1],X).fit()
+        pval[col] = model.pvalues[col]
+
+    min_pval = pval.min()
+    if min_pval < sl_enter: ## 최소 p-value 값이 기준 값보다 작으면 포함
+        selected_variables.append(pval.idxmin())
+        
+        step += 1
+        steps.append(step)
+        bic = sm.Logit(Y.iloc[:, 0:1],sm.add_constant(X_[selected_variables])).fit().bic
+        bic_lst.append(bic)
+        sv_per_step.append(selected_variables.copy())
+    else:
+        iter = 0
+        res = sm.Logit(Y.iloc[:, 0:1],sm.add_constant(X_[selected_variables])).fit()
+        break
+work3_y1_forward = res.summary()
+#%% backward elimination
+
+variables = X_.columns
+
+selected_variables = list(set(variables)) ## 초기에는 모든 변수가 선택된 상태
+sl_remove = 0.1
+
+sv_per_step = [] ## 각 스텝별로 선택된 변수들
+bic_lst = [] ## 각 스텝별 수정된 결정계수
+steps = [] ## 스텝
+step = 0
+iter = len(selected_variables)
+while iter > 0:
+    X = sm.add_constant(X_[selected_variables])
+    p_vals = sm.Logit(Y.iloc[:, 0:1], X).fit().pvalues[1:] ## 절편항의 p-value는 뺀다
+    max_pval = p_vals.max() ## 최대 p-value
+    if max_pval >= sl_remove: ## 최대 p-value값이 기준값보다 크거나 같으면 제외
+        remove_variable = p_vals.idxmax()
+        selected_variables.remove(remove_variable)
+
+        step += 1
+        steps.append(step)
+        bic = sm.Logit(Y.iloc[:, 0:1],sm.add_constant(X[selected_variables])).fit().bic
+        bic_lst.append(bic)
+        sv_per_step.append(selected_variables.copy())
+    else:
+        iter = 0
+        res = sm.Logit(Y.iloc[:, 0:1],sm.add_constant(X[selected_variables])).fit()
+        break
+
+work3_y1_backward = res.summary()
+#%% y2 forward selection
+
+variables = X_.columns ## 설명 변수 리스트
+
+selected_variables = [] ## 선택된 변수들
+sl_enter = 0.1
+
+sv_per_step = [] ## 각 스텝별로 선택된 변수들
+bic_lst = [] ## 각 스텝별 수정된 결정계수
+steps = [] ## 스텝
+step = 0
+iter = len(variables)
+while iter > 0:
+    remainder = list(set(variables) - set(selected_variables))
+    pval = pd.Series(index=remainder) ## 변수의 p-value
+    ## 기존에 포함된 변수와 새로운 변수 하나씩 돌아가면서 
+    ## 선형 모형을 적합한다.
+    for col in remainder: 
+        X = X_[selected_variables+[col]]
+        X = sm.add_constant(X)
+        model = sm.Logit(Y.iloc[:, 1:2],X).fit()
+        pval[col] = model.pvalues[col]
+
+    min_pval = pval.min()
+    if min_pval < sl_enter: ## 최소 p-value 값이 기준 값보다 작으면 포함
+        selected_variables.append(pval.idxmin())
+        
+        step += 1
+        steps.append(step)
+        bic = sm.Logit(Y.iloc[:, 1:2],sm.add_constant(X_[selected_variables])).fit().bic
+        bic_lst.append(bic)
+        sv_per_step.append(selected_variables.copy())
+    else:
+        iter = 0
+        res = sm.Logit(Y.iloc[:, 1:2],sm.add_constant(X_[selected_variables])).fit()
+        break
+work3_y2_forward = res.summary()
+#%% backward elimination
+
+variables = X_.columns
+
+selected_variables = list(set(variables)) ## 초기에는 모든 변수가 선택된 상태
+sl_remove = 0.1
+
+sv_per_step = [] ## 각 스텝별로 선택된 변수들
+bic_lst = [] ## 각 스텝별 수정된 결정계수
+steps = [] ## 스텝
+step = 0
+iter = len(selected_variables)
+while iter > 0:
+    X = sm.add_constant(X_[selected_variables])
+    p_vals = sm.Logit(Y.iloc[:, 1:2], X).fit().pvalues[1:] ## 절편항의 p-value는 뺀다
+    max_pval = p_vals.max() ## 최대 p-value
+    if max_pval >= sl_remove: ## 최대 p-value값이 기준값보다 크거나 같으면 제외
+        remove_variable = p_vals.idxmax()
+        selected_variables.remove(remove_variable)
+
+        step += 1
+        steps.append(step)
+        bic = sm.Logit(Y.iloc[:, 1:2],sm.add_constant(X[selected_variables])).fit().bic
+        bic_lst.append(bic)
+        sv_per_step.append(selected_variables.copy())
+    else:
+        iter = 0
+        res = sm.Logit(Y.iloc[:, 1:2],sm.add_constant(X[selected_variables])).fit()
+        break
+
+work3_y2_backward = res.summary()
 #%% forward selection
 
 variables = X_.columns ## 설명 변수 리스트
@@ -250,7 +390,7 @@ while iter > 0:
         iter = 0
         res = sm.Logit(Y.iloc[:, 2:3],sm.add_constant(X_[selected_variables])).fit()
         break
-res.summary()
+work3_y3_forward = res.summary()
 #%% backward elimination
 
 variables = X_.columns
@@ -281,8 +421,7 @@ while iter > 0:
         res = sm.Logit(Y.iloc[:, 2:3],sm.add_constant(X[selected_variables])).fit()
         break
 
-work3 = res.summary()
-print(work3)
+work3_y3_backward = res.summary()
 #%% Work 5
 
 factor_ = data.loc[:, ['Importanceofsegregation', 'Segregationisthebiggestproblem',
@@ -370,7 +509,7 @@ X_ = pd.concat([X_, factor], axis=1)
 X = sm.add_constant(X_)
 res = sm.Logit(Y, X).fit()
 
-print(res.summary())
+work4_y3_all = res.summary()
 
 #%% forward selection
 
@@ -408,7 +547,7 @@ while iter > 0:
         iter = 0
         res = sm.Logit(Y,sm.add_constant(X_[selected_variables])).fit()
         break
-res.summary()
+work4_y3_forward = res.summary()
 #%% backward elimination
 
 variables = X_.columns
@@ -439,12 +578,20 @@ while iter > 0:
         res = sm.Logit(Y,sm.add_constant(X[selected_variables])).fit()
         break
 
-work4 = res.summary()
-print(work4)
+work4_y3_backward = res.summary()
 # %%
-os.chdir(r"C:\won\data\seperate_garbage\result")
-work = [work1, work2, work3, work3_factor, work5]
-file_names = ['res_work1','res_work2','res_work3_all_sample', 'res_work3_factor_variances', 'res_work4_factor_variances']
+# os.chdir(r"C:\won\data\seperate")
+os.chdir("/Users/wonhyung64/data/seperate")
+work = [work1, work2, work3_y1_all, work3_y2_all, 
+        work3_y3_all, work3_y1_forward, work3_y1_backward,
+        work3_y2_forward, work3_y2_backward, work3_y3_forward,
+        work3_y3_backward, work3_factor, work5,
+        work4_y3_all, work4_y3_forward, work4_y3_backward]
+file_names = ["work1", "work2", "work3_y1_all", "work3_y2_all", 
+        "work3_y3_all", "work3_y1_forward", "work3_y1_backward",
+        "work3_y2_forward", "work3_y2_backward", "work3_y3_forward",
+        "work3_y3_backward", "work3_factor", "work5",
+        "work4_y3_all", "work4_y3_forward", "work4_y3_backward"]
 for i in range(len(file_names)):
     try:
         with open(file_names[i]+'.csv', 'w')  as f:
